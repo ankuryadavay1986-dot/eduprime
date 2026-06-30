@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="theme-color" content="#0a0a0f" id="meta-theme-color"/>
+  <title>Edu Prime</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script>
+    /* ── Instant theme apply — no flash ── */
+    (function() {
+      var DARK_COLOR  = "#0a0a0f";
+      var LIGHT_COLOR = "#f4f4f8";
+
+      function setThemeColorMeta(isLight) {
+        var meta = document.getElementById("meta-theme-color");
+        if (meta) meta.setAttribute("content", isLight ? LIGHT_COLOR : DARK_COLOR);
+      }
+
+      var saved = localStorage.getItem("ep_dark_mode");
+      var isLight;
+      if (saved !== null) {
+        isLight = saved === "0";
+      } else {
+        isLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+      }
+      if (isLight) document.documentElement.classList.add("light-mode");
+      setThemeColorMeta(isLight);
+
+      window.addEventListener("ep-theme-change", function (e) {
+        setThemeColorMeta(!e.detail.dark);
+      });
+      window.addEventListener("storage", function (e) {
+        if (e.key === "ep_dark_mode") {
+          var nowLight = e.newValue === "0";
+          document.documentElement.classList.toggle("light-mode", nowLight);
+          setThemeColorMeta(nowLight);
+        }
+      });
+      window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function (e) {
+        if (localStorage.getItem("ep_dark_mode") === null) {
+          document.documentElement.classList.toggle("light-mode", e.matches);
+          setThemeColorMeta(e.matches);
+        }
+      });
+
+      window.__epSetThemeColor = setThemeColorMeta;
+    })();
+  </script>
+</head>
+<body class="page-home">
+
+  <!-- ── Overlay ── -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- ── Sidebar ── -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-brand">Edu Prime</span>
+      <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="sidebar-nav" id="sidebarNav">
+      <a href="index.html" class="active">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9.5a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/>
+          </svg>
+        </span>Home
+      </a>
+      <a href="batch.html">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+        </span>Batches
+      </a>
+      <a href="settings.html">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </span>Settings
+      </a>
+      <!-- Dynamic links injected by app.js -->
+    </div>
+    <div class="sidebar-footer">
+      <div class="dark-toggle-wrap">
+        <span class="dark-toggle-label">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          Dark Mode
+        </span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="darkToggle" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Header ── -->
+  <header class="site-header">
+    <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <span class="site-logo">Edu Prime</span>
+    <a class="yt-btn" id="ytBtn" href="https://youtube.com/@cricexplainer1?si=kXPk63XaOF4CTpE6" target="_blank" rel="noopener" aria-label="YouTube">
+      <svg viewBox="0 0 24 24"><path d="M21.8 8s-.2-1.4-.8-2a2.9 2.9 0 0 0-2-1C17.2 4.8 12 4.8 12 4.8s-5.2 0-7 .2a2.9 2.9 0 0 0-2 1C2.4 6.6 2.2 8 2.2 8S2 9.6 2 11.2v1.5c0 1.6.2 3.2.2 3.2s.2 1.4.8 2a2.9 2.9 0 0 0 2 1c1.6.2 6.8.2 8 .2s5.2 0 7-.2a2.9 2.9 0 0 0 2-1c.6-.6.8-2 .8-2S22 13.3 22 11.7v-1.5C22 8.6 21.8 8 21.8 8zM9.7 14.5V9l5.4 2.8-5.4 2.7z"/></svg>
+    </a>
+  </header>
+
+  <!-- ── Announcement Bar ── -->
+  <div class="ann-bar">
+    <div class="ann-box">
+      <div class="ann-track" id="annTrack">
+        <span class="ann-icon">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="0.5" fill="currentColor" stroke="none"/>
+          </svg>
+        </span>
+        <span id="annText">Stay focused. Success is loading…</span>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <span class="ann-icon">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="0.5" fill="currentColor" stroke="none"/>
+          </svg>
+        </span>
+        <span id="annText2">Stay focused. Success is loading…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main ── -->
+  <main class="main-content">
+    <div class="section-label">Popular Apps</div>
+    <section class="app-grid" id="appGrid">
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+    </section>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.28a2 2 0 0 1 1.42.59l1.42 1.42A2 2 0 0 0 14.54 8H19a2 2 0 0 1 2 2z"/>
+          <path d="M3 12h4l2 3h6l2-3h4"/>
+        </svg>
+      </div>
+      <h3>No Apps Found</h3>
+      <p>Check back later for available study apps.</p>
+    </div>
+  </main>
+
+  <!-- ── Bottom Nav ── -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bn-item active">
+      <span class="bn-icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9.5a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/>
+        </svg>
+      </span><span>Home</span>
+    </a>
+    <a href="batch.html" class="bn-item">
+      <span class="bn-icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+      </span><span>Batches</span>
+    </a>
+    <a href="settings.html" class="bn-item">
+      <span class="bn-icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </span><span>Settings</span>
+    </a>
+  </nav>
+
+  <!-- ── Toast ── -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script type="module" src="app.js"></script>
+  <script>
+    /* ── Safe PWA Service Worker ── */
+    if ("serviceWorker" in navigator) {
+      var _isHttps = location.protocol === "https:";
+      var _isLocal = ["localhost","127.0.0.1","::1"].indexOf(location.hostname) !== -1;
+      if (_isHttps || _isLocal) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("/sw.js", { scope: "/" })
+            .then(function (r) { console.log("[PWA] SW ok:", r.scope); })
+            .catch(function (e) { console.warn("[PWA] SW skipped:", e.message); });
+        });
+      }
+    }
+  </script>
+</body>
+</html>

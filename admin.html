@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="theme-color" content="#080612" id="meta-theme-color"/>
+  <title>Admin — Edu Prime</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* Admin-only extras */
+    .admin-layout { min-height:100dvh; display:flex }
+    #adminGate    { display:none }
+    #adminApp     { display:none; width:100%; flex-direction:column }
+    .tab-content  { display:none }
+    .tab-content.active { display:block }
+    .thumb-prev   { width:60px; height:40px; object-fit:cover; border-radius:6px; border:1px solid var(--border-default) }
+    .logo-prev    { width:36px; height:36px; object-fit:contain; border-radius:6px; border:1px solid var(--border-default) }
+    .top10-list   { display:flex; flex-direction:column; gap:8px; overflow:hidden }
+    .top10-item   { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--surface-2); border-radius:var(--r-sm) }
+    .top10-rank   { font-family:var(--ff-display); font-size:.85rem; font-weight:800; color:var(--violet-500); width:22px }
+    .top10-name   { flex:1; font-size:.82rem; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+    .top10-grid   { display:flex; gap:14px; margin-bottom:16px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px }
+    .top10-grid::-webkit-scrollbar { height:4px }
+    .top10-grid::-webkit-scrollbar-track { background:transparent }
+    .top10-grid::-webkit-scrollbar-thumb { background:rgba(124,58,237,.3); border-radius:4px }
+    .top10-grid > .chart-wrap { min-width:260px; flex:0 0 260px; overflow:hidden }
+    .top10-count  { font-size:.75rem; color:var(--text-muted); background:var(--surface-3); padding:3px 9px; border-radius:var(--r-pill) }
+    select.form-input { appearance:none; cursor:pointer; }
+    .a-icon svg, .nav-icon svg { width:16px; height:16px; display:block }
+    .table-toolbar { display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap }
+    .table-toolbar .search-wrap { max-width:280px }
+    .pagination { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:14px }
+    .page-btn {
+      width:32px; height:32px; border-radius:var(--r-sm); border:1px solid var(--border-default);
+      background:var(--surface-2); color:var(--text-secondary); font-size:.8rem; font-weight:600;
+      display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.15s;
+    }
+    .page-btn:hover:not(:disabled) { background:rgba(124,58,237,.15); border-color:var(--border-hover); color:var(--text-primary) }
+    .page-btn.active { background:var(--violet-600); color:#fff; border-color:transparent }
+    .page-btn:disabled { opacity:.35; cursor:not-allowed }
+    .field-hint { font-size:.72rem; color:var(--text-muted); margin-top:4px; display:block }
+    .cta-preview-btn {
+      display:inline-block; margin-top:8px; padding:9px 18px; border-radius:var(--r-pill);
+      font-size:.78rem; font-weight:700; text-align:center;
+    }
+  </style>
+  <script>
+    /* ── Instant theme apply — no flash ── */
+    (function() {
+      var DARK_COLOR  = "#080612";
+      var LIGHT_COLOR = "#f4f4f8";
+
+      function setThemeColorMeta(isLight) {
+        var meta = document.getElementById("meta-theme-color");
+        if (meta) meta.setAttribute("content", isLight ? LIGHT_COLOR : DARK_COLOR);
+      }
+
+      var saved = localStorage.getItem("ep_dark_mode");
+      var isLight;
+      if (saved !== null) {
+        isLight = saved === "0";
+      } else {
+        isLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+      }
+      if (isLight) document.documentElement.classList.add("light-mode");
+      setThemeColorMeta(isLight);
+
+      window.addEventListener("ep-theme-change", function (e) {
+        setThemeColorMeta(!e.detail.dark);
+      });
+      window.addEventListener("storage", function (e) {
+        if (e.key === "ep_dark_mode") {
+          var nowLight = e.newValue === "0";
+          document.documentElement.classList.toggle("light-mode", nowLight);
+          setThemeColorMeta(nowLight);
+        }
+      });
+      window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function (e) {
+        if (localStorage.getItem("ep_dark_mode") === null) {
+          document.documentElement.classList.toggle("light-mode", e.matches);
+          setThemeColorMeta(e.matches);
+        }
+      });
+
+      window.__epSetThemeColor = setThemeColorMeta;
+    })();
+  </script>
+</head>
+<body class="page-admin">
+
+  <!-- ── Auth Gate ── -->
+  <div id="adminGate" class="auth-gate">
+    <div class="auth-card">
+      <div class="auth-logo">EDU PRIME</div>
+      <p class="auth-subtitle">Admin Dashboard — Authorized Access Only</p>
+      <div class="auth-error" id="authError"></div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="loginEmail" type="email" placeholder="admin@example.com" autocomplete="username"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <button class="btn-login" id="loginBtn">Sign In →</button>
+    </div>
+  </div>
+
+  <!-- ── Admin App ── -->
+  <div id="adminApp" class="admin-layout">
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="admin-sidebar-head">
+        <div class="admin-brand">EDU PRIME</div>
+        <div class="admin-role" id="adminEmail">Admin</div>
+      </div>
+      <nav class="admin-nav">
+        <div class="nav-section-label">Overview</div>
+        <a href="#" class="active" data-tab="analytics"><span class="a-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8 14 12.7 11 9.7 7 13.7"/></svg></span>Analytics</a>
+
+        <div class="nav-section-label">Content</div>
+        <a href="#" data-tab="apps"><span class="a-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg></span>Apps</a>
+        <a href="#" data-tab="batches"><span class="a-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>Batches</a>
+        <a href="#" data-tab="announcement"><span class="a-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8 13 21l3-2-1.6-3"/></svg></span>Announcement</a>
+        <a href="#" data-tab="sidebar-links"><span class="a-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>Sidebar Links</a>
+
+        <div class="nav-section-label">Data</div>
+        <a href="#" data-tab="import"><span class="a-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>JSON Import</a>
+        <a href="#" data-tab="export"><span class="a-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>Export</a>
+
+        <div class="nav-section-label">Account</div>
+        <a href="#" id="adminLogout"><span class="a-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>Sign Out</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <div class="admin-main">
+      <div class="admin-topbar">
+        <button class="admin-menu-btn" id="adminMenuBtn">☰</button>
+        <span class="admin-topbar-title" id="topbarTitle">Analytics</span>
+        <span class="admin-user" id="topbarUser"></span>
+      </div>
+
+      <div class="admin-content">
+
+        <!-- ── Analytics ── -->
+        <div class="tab-content active" id="tab-analytics">
+          <div class="admin-stats" id="statsGrid">
+            <div class="stat-card"><div class="stat-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="stat-label">Total Visitors</div><div class="stat-value" id="statVisitors">—</div></div>
+            <div class="stat-card"><div class="stat-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11.5V7a2 2 0 1 1 4 0v4.5"/><path d="M13 7a2 2 0 1 1 4 0v5"/><path d="M17 9.5a2 2 0 1 1 4 0V14a7 7 0 0 1-7 7h-1.5a6 6 0 0 1-5-2.7L4 12.5a1.7 1.7 0 0 1 2.7-2L9 13"/></svg></div><div class="stat-label">Total Clicks</div><div class="stat-value" id="statClicks">—</div></div>
+            <div class="stat-card"><div class="stat-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="stat-label">Today</div><div class="stat-value" id="statToday">—</div></div>
+            <div class="stat-card"><div class="stat-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h2v2H8z"/></svg></div><div class="stat-label">This Week</div><div class="stat-value" id="statWeek">—</div></div>
+            <div class="stat-card"><div class="stat-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h2v2H8zM14 14h2v2h-2z"/></svg></div><div class="stat-label">This Month</div><div class="stat-value" id="statMonth">—</div></div>
+            <div class="stat-card"><div class="stat-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M5 4H3v2a3 3 0 0 0 3 3M19 4h2v2a3 3 0 0 1-3 3"/></svg></div><div class="stat-label">Top App</div><div class="stat-value" id="statTopApp" style="font-size:.85rem">—</div></div>
+          </div>
+
+          <div class="chart-wrap">
+            <div class="chart-title">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M3 3v18h18"/><path d="M18.7 8 14 12.7 11 9.7 7 13.7"/></svg>
+              Daily Clicks — Last 7 Days
+            </div>
+            <div class="bar-chart" id="weeklyChart"></div>
+          </div>
+
+          <div class="top10-grid">
+            <div class="chart-wrap">
+              <div class="chart-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/></svg>
+                Top 10 Apps
+              </div>
+              <div class="top10-list" id="top10Apps"></div>
+            </div>
+            <div class="chart-wrap">
+              <div class="chart-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                Top 10 Batches
+              </div>
+              <div class="top10-list" id="top10Batches"></div>
+            </div>
+          </div>
+
+          <div class="chart-wrap">
+            <div class="chart-title">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              Recent Activity
+            </div>
+            <div class="activity-feed" id="activityFeed"></div>
+          </div>
+        </div>
+
+        <!-- ── Apps ── -->
+        <div class="tab-content" id="tab-apps">
+          <div class="admin-section">
+            <div class="admin-section-title">
+              Apps Management
+              <button class="btn-add" id="addAppBtn">+ Add App</button>
+            </div>
+            <div class="table-toolbar">
+              <div class="search-wrap">
+                <span class="search-icon">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input class="search-input" id="appsSearch" placeholder="Search apps…"/>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead><tr><th>Logo</th><th>Name</th><th>Description</th><th>CTA</th><th>Popular</th><th>Actions</th></tr></thead>
+                <tbody id="appsTableBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">Loading…</td></tr></tbody>
+              </table>
+            </div>
+            <div class="pagination" id="appsPagination"></div>
+          </div>
+        </div>
+
+        <!-- ── Batches ── -->
+        <div class="tab-content" id="tab-batches">
+          <div class="admin-section">
+            <div class="admin-section-title">
+              Batches Management
+              <button class="btn-add" id="addBatchBtn">+ Add Batch</button>
+            </div>
+            <div class="table-toolbar">
+              <div class="search-wrap">
+                <span class="search-icon">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input class="search-input" id="batchesSearch" placeholder="Search batches…"/>
+              </div>
+              <select class="form-input" id="batchesAppFilter" style="max-width:200px">
+                <option value="">All Apps</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead><tr><th>Thumb</th><th>Name</th><th>App</th><th>Featured</th><th>Actions</th></tr></thead>
+                <tbody id="batchesTableBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px">Loading…</td></tr></tbody>
+              </table>
+            </div>
+            <div class="pagination" id="batchesPagination"></div>
+          </div>
+        </div>
+
+        <!-- ── Announcement ── -->
+        <div class="tab-content" id="tab-announcement">
+          <div class="admin-section">
+            <div class="admin-section-title">Announcement Bar</div>
+            <div class="ann-editor">
+              <label class="form-label">Announcement Text</label>
+              <textarea class="ann-textarea" id="annTextarea" placeholder="Enter announcement message…"></textarea>
+              <button class="btn-save" id="saveAnnBtn" style="width:100%">Save Announcement</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Sidebar Links ── -->
+        <div class="tab-content" id="tab-sidebar-links">
+          <div class="admin-section">
+            <div class="admin-section-title">
+              Sidebar Links
+              <button class="btn-add" id="addLinkBtn">+ Add Link</button>
+            </div>
+            <div id="linksList"></div>
+            <button class="btn-save" id="saveLinksBtn" style="margin-top:14px;padding:10px 24px">Save Links</button>
+          </div>
+        </div>
+
+        <!-- ── JSON Import ── -->
+        <div class="tab-content" id="tab-import">
+          <div class="admin-section">
+            <div class="admin-section-title">JSON Import</div>
+            <p style="font-size:.82rem;color:var(--text-2);margin-bottom:16px;line-height:1.6">
+              Upload a JSON file containing an array of batch objects.<br/>
+              Required fields: <code style="color:var(--purple-3)">app_id, batch_name, thumbnail_url, study_url, description</code><br/>
+              Large files (1000+ records) are imported in parallel chunks — this tab can handle 5000+ at once.
+            </p>
+            <div class="import-drop" id="importDrop">
+              <div class="import-icon">
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </div>
+              <div class="import-label">
+                <strong>Tap to choose a JSON file</strong><br/>or drag &amp; drop here
+              </div>
+              <input type="file" id="importFile" accept=".json" style="display:none"/>
+              <div class="import-preview" id="importPreview"></div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+              <button class="btn-save" id="importBtn" disabled style="opacity:.5">Import to Firestore</button>
+              <button class="btn-cancel" id="clearImportBtn">Clear</button>
+            </div>
+
+            <!-- Progress bar (hidden until import starts) -->
+            <div id="importProgressWrap" style="display:none;margin-top:16px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span style="font-size:.78rem;color:var(--text-2)" id="importProgressLabel">0 / 0</span>
+                <span style="font-size:.78rem;color:var(--text-2)" id="importProgressPct">0%</span>
+              </div>
+              <div style="height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden">
+                <div id="importProgressBar" style="height:100%;width:0%;background:var(--grad-purple);transition:width .25s ease;border-radius:999px"></div>
+              </div>
+            </div>
+
+            <div id="importResult" style="margin-top:12px;font-size:.8rem;color:var(--text-2)"></div>
+            <button class="btn-cancel" id="downloadFailedBtn" style="display:none;margin-top:8px">Download Failed Records</button>
+          </div>
+        </div>
+
+
+        <!-- ── Export ── -->
+        <div class="tab-content" id="tab-export">
+          <div class="admin-section">
+            <div class="admin-section-title">Export Data</div>
+            <div class="export-btns">
+              <button class="btn-export" id="exportAppsJson"><span class="export-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/></svg></span>Apps JSON</button>
+              <button class="btn-export" id="exportBatchesJson"><span class="export-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>Batches JSON</button>
+              <button class="btn-export" id="exportAppsCSV"><span class="export-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8 14 12.7 11 9.7 7 13.7"/></svg></span>Apps CSV</button>
+              <button class="btn-export" id="exportBatchesCSV"><span class="export-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8 14 12.7 11 9.7 7 13.7"/></svg></span>Batches CSV</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /admin-content -->
+    </div><!-- /admin-main -->
+  </div><!-- /adminApp -->
+
+  <!-- ── App Modal ── -->
+  <div class="modal-overlay" id="appModal">
+    <div class="modal">
+      <div class="modal-title" id="appModalTitle">Add App</div>
+      <input type="hidden" id="appModalId"/>
+      <div class="form-group">
+        <label class="form-label">App Name *</label>
+        <input class="form-input" id="appName" placeholder="e.g. Next Toppers"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Logo URL</label>
+        <input class="form-input" id="appLogo" placeholder="https://…"/>
+        <img id="appLogoPreview" class="logo-prev" style="display:none;margin-top:8px" alt="Logo preview"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input class="form-input" id="appDesc" placeholder="Short description"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Display Order</label>
+        <input class="form-input" id="appOrder" type="number" placeholder="1" value="1"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Button Text</label>
+        <input class="form-input" id="appCtaLabel" placeholder="Let's Study" value="Let's Study"/>
+        <span class="field-hint">Shown on the card's call-to-action button on the home page.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Button Style</label>
+        <select class="form-input" id="appCtaStyle">
+          <option value="dark">Dark Pill (default)</option>
+          <option value="primary">Purple Pill</option>
+        </select>
+        <button type="button" class="cta-preview-btn btn-dark" id="ctaPreviewBtn" style="background:#15131f;color:#fff;border:none">Let's Study</button>
+      </div>
+      <div class="form-group">
+        <label class="form-check">
+          <input type="checkbox" id="appPopular"/>
+          Mark as Popular
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="appModalCancel">Cancel</button>
+        <button class="btn-save" id="appModalSave">Save App</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Batch Modal ── -->
+  <div class="modal-overlay" id="batchModal">
+    <div class="modal">
+      <div class="modal-title" id="batchModalTitle">Add Batch</div>
+      <input type="hidden" id="batchModalId"/>
+      <div class="form-group">
+        <label class="form-label">App *</label>
+        <select class="form-input" id="batchAppId">
+          <option value="">Select an app…</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Batch Name *</label>
+        <input class="form-input" id="batchName" placeholder="e.g. Lakshya JEE 2026"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Thumbnail URL</label>
+        <input class="form-input" id="batchThumb" placeholder="https://…"/>
+        <img id="batchThumbPreview" class="thumb-prev" style="display:none;margin-top:8px" alt="Thumbnail preview"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Study URL *</label>
+        <input class="form-input" id="batchStudyUrl" placeholder="https://…"/>
+        <span class="field-hint" id="studyUrlHint">Must start with https:// — links like intent:// or market:// will not load.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input class="form-input" id="batchDesc" placeholder="Short description"/>
+      </div>
+      <div class="form-group">
+        <label class="form-check">
+          <input type="checkbox" id="batchFeatured"/>
+          Mark as Featured
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="batchModalCancel">Cancel</button>
+        <button class="btn-save" id="batchModalSave">Save Batch</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Confirm Modal ── -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal" style="max-width:340px;text-align:center">
+      <div class="modal-title">Confirm Delete</div>
+      <p style="color:var(--text-2);font-size:.88rem;margin-bottom:20px" id="confirmMsg">Are you sure?</p>
+      <div class="modal-actions" style="justify-content:center">
+        <button class="btn-cancel" id="confirmCancel">Cancel</button>
+        <button class="btn-delete" id="confirmOk" style="padding:9px 20px;border-radius:var(--r-pill);font-size:.82rem;font-weight:700">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast ── -->
+  <div class="toast-container" id="toastContainer" style="bottom:20px"></div>
+
+  <script type="module" src="admin.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      var _h = location.hostname, _p = location.protocol;
+      if (_p === "https:" || _h === "localhost" || _h === "127.0.0.1") {
+        window.addEventListener("load", function () {
+          var _b = location.pathname.substring(0, location.pathname.lastIndexOf("/") + 1);
+          navigator.serviceWorker.register(_b + "sw.js", { scope: _b })
+            .then(function(r){ console.log("[PWA] SW ok:", r.scope); })
+            .catch(function(e){ console.warn("[PWA] SW skipped:", e.message); });
+        });
+      }
+    }
+  </script>
+</body>
+</html>

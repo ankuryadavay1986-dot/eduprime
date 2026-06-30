@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)"/>
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)"/>
+  <title>Offline — Edu Prime</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Dark mode (default) ── */
+    :root {
+      --bg:       #0a0a0f;
+      --text1:    rgba(255,255,255,0.88);
+      --text2:    rgba(255,255,255,0.4);
+      --circle-bg:  rgba(139,92,246,0.08);
+      --circle-br:  rgba(139,92,246,0.2);
+      --pulse-br:   rgba(139,92,246,0.4);
+    }
+
+    /* ── Light mode ── */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg:         #f5f5f7;
+        --text1:      rgba(0,0,0,0.85);
+        --text2:      rgba(0,0,0,0.4);
+        --circle-bg:  rgba(124,58,237,0.07);
+        --circle-br:  rgba(124,58,237,0.18);
+        --pulse-br:   rgba(124,58,237,0.3);
+      }
+    }
+
+    body {
+      min-height: 100dvh;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-family: Inter, sans-serif;
+      color: var(--text1);
+      gap: 24px;
+      transition: background 0.3s;
+    }
+
+    /* WiFi */
+    .wifi-wrap {
+      position: relative;
+      width: 90px; height: 90px;
+      display: flex; align-items: center; justify-content: center;
+      animation: fadeIn 0.6s ease forwards;
+    }
+    .pulse {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 1.5px solid var(--pulse-br);
+      animation: pulse 2s ease-out infinite;
+    }
+    .pulse:nth-child(2) { animation-delay: 0.8s; }
+    @keyframes pulse {
+      0%   { transform: scale(0.7); opacity: 0.7; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    .wifi-circle {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: var(--circle-bg);
+      border: 1px solid var(--circle-br);
+      display: flex; align-items: center; justify-content: center;
+      animation: bob 3s ease-in-out infinite;
+    }
+    @keyframes bob {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-5px); }
+    }
+
+    h1 {
+      font-size: 1.4rem; font-weight: 700;
+      color: var(--text1);
+      animation: fadeIn 0.6s 0.15s ease both;
+    }
+    p {
+      font-size: .82rem;
+      color: var(--text2);
+      animation: fadeIn 0.6s 0.25s ease both;
+    }
+
+    button {
+      background: linear-gradient(135deg, #7c3aed, #5b3df0);
+      color: #fff; border: none; border-radius: 50px;
+      padding: 12px 36px;
+      font-family: Inter, sans-serif;
+      font-size: .88rem; font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(139,92,246,0.35);
+      display: flex; align-items: center; gap: 7px;
+      transition: transform 0.15s;
+      animation: fadeIn 0.6s 0.35s ease both;
+    }
+    button:active   { transform: scale(0.95); }
+    button:disabled { opacity: 0.7; cursor: default; }
+
+    .spin { display: inline-block; }
+    .spin.go { animation: spin 0.7s linear infinite; }
+    @keyframes spin    { to { transform: rotate(360deg); } }
+    @keyframes fadeIn  { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes shake   { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  </style>
+  <script>
+    /* ── Instant theme apply — no flash ── */
+    (function() {
+      var saved = localStorage.getItem("ep_dark_mode");
+      var isLight;
+      if (saved !== null) {
+        isLight = saved === "0";
+      } else {
+        isLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+      }
+      if (isLight) document.documentElement.classList.add("light-mode");
+    })();
+  </script>
+</head>
+<body>
+
+  <div class="wifi-wrap">
+    <div class="pulse"></div>
+    <div class="pulse"></div>
+    <div class="wifi-circle">
+      <svg viewBox="0 0 48 48" width="36" height="36" fill="none">
+        <path d="M6 19c9.4-8.7 26.6-8.7 36 0" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round">
+          <animate attributeName="opacity" values="0.2;1;0.2" dur="2s" begin="0s" repeatCount="indefinite"/>
+        </path>
+        <path d="M11.5 25.5c6.9-6.4 18.1-6.4 25 0" stroke="#7c3aed" stroke-width="3" stroke-linecap="round">
+          <animate attributeName="opacity" values="0.2;1;0.2" dur="2s" begin="0.4s" repeatCount="indefinite"/>
+        </path>
+        <path d="M17 32c3.9-3.6 11.1-3.6 15 0" stroke="#6d28d9" stroke-width="3" stroke-linecap="round">
+          <animate attributeName="opacity" values="0.2;1;0.2" dur="2s" begin="0.8s" repeatCount="indefinite"/>
+        </path>
+        <circle cx="24" cy="38" r="2.5" fill="#8b5cf6">
+          <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <line x1="9" y1="9" x2="39" y2="42" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round">
+          <animate attributeName="opacity" values="0.5;1;0.5" dur="1.5s" repeatCount="indefinite"/>
+        </line>
+      </svg>
+    </div>
+  </div>
+
+  <h1>You're Offline</h1>
+  <p>Check your connection and try again</p>
+
+  <button id="btn" onclick="retry()">
+    <span class="spin" id="icon">↻</span> Retry
+  </button>
+
+  <script>
+    function retry() {
+      const btn  = document.getElementById('btn');
+      const icon = document.getElementById('icon');
+      btn.disabled = true;
+      icon.classList.add('go');
+      setTimeout(() => {
+        location.href = '/index.html';
+      }, 1500);
+    }
+    window.addEventListener('online', () => setTimeout(() => location.href = '/index.html', 500));
+  </script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      var _h = location.hostname, _p = location.protocol;
+      if (_p === "https:" || _h === "localhost" || _h === "127.0.0.1") {
+        window.addEventListener("load", function () {
+          var _b = location.pathname.substring(0, location.pathname.lastIndexOf("/") + 1);
+          navigator.serviceWorker.register(_b + "sw.js", { scope: _b })
+            .then(function(r){ console.log("[PWA] SW ok:", r.scope); })
+            .catch(function(e){ console.warn("[PWA] SW skipped:", e.message); });
+        });
+      }
+    }
+  </script>
+</body>
+</html>
